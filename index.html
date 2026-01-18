@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Daily Check</title>
+
+<style>
+body {
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  text-align: center;
+  padding: 40px 20px;
+  background: #f9f9f9;
+}
+.card {
+  background: white;
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.hint {
+  color: #666;
+  margin-top: 10px;
+}
+#status {
+  margin-top: 20px;
+  font-weight: bold;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card" id="card">
+  <h2>How are you feeling today?</h2>
+  <p class="hint">Swipe to answer</p>
+  <p class="hint">⬆ Better · ➡ Same · ⬇ Worse · ⬅ Skip</p>
+  <p id="status">Waiting for response…</p>
+</div>
+
+<script>
+let startX = 0;
+let startY = 0;
+
+const status = document.getElementById("status");
+const card = document.getElementById("card");
+
+card.addEventListener("touchstart", e => {
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+});
+
+card.addEventListener("touchend", e => {
+  const dx = e.changedTouches[0].clientX - startX;
+  const dy = e.changedTouches[0].clientY - startY;
+
+  if (Math.abs(dx) > Math.abs(dy)) {
+    if (dx > 50) record("SAME");
+    else if (dx < -50) record("SKIP");
+  } else {
+    if (dy < -50) record("BETTER");
+    else if (dy > 50) record("WORSE");
+  }
+});
+
+function record(value) {
+  status.innerText = "Recorded: " + value;
+
+  // NEXT STEP: send to backend
+  console.log({
+    answer: value,
+    timestamp: new Date().toISOString()
+  });
+}
+</script>
+
+</body>
+</html>
