@@ -1,75 +1,98 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Daily Check</title>
+  <meta charset="UTF-8" />
+  <title>Swipe Survey</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<style>
-body {
-  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
-  text-align: center;
-  padding: 40px 20px;
-  background: #f9f9f9;
-}
-.card {
-  background: white;
-  padding: 30px;
-  border-radius: 16px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-}
-.hint {
-  color: #666;
-  margin-top: 10px;
-}
-#status {
-  margin-top: 20px;
-  font-weight: bold;
-}
-</style>
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .card {
+      background: white;
+      padding: 32px;
+      border-radius: 20px;
+      width: 90%;
+      max-width: 360px;
+      text-align: center;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    }
+    h1 { margin-bottom: 12px; }
+    p { color: #666; }
+    .confirm {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
 
 <div class="card" id="card">
-  <h2>How are you feeling today?</h2>
-  <p class="hint">Swipe to answer</p>
-  <p class="hint">⬆ Better · ➡ Same · ⬇ Worse · ⬅ Skip</p>
-  <p id="status">Waiting for response…</p>
+  <h1>How are you feeling today?</h1>
+  <p>Swipe to answer</p>
+  <p>↑ Better · → Same · ↓ Worse · ← Skip</p>
+  <div class="confirm" id="status"></div>
 </div>
 
 <script>
+const ENDPOINT = "PASTE_WEB_APP_URL_HERE";
+
 let startX = 0;
 let startY = 0;
+let answered = false;
 
-const status = document.getElementById("status");
-const card = document.getElementById("card");
-
-card.addEventListener("touchstart", e => {
+document.addEventListener("touchstart", e => {
   startX = e.touches[0].clientX;
   startY = e.touches[0].clientY;
 });
 
-card.addEventListener("touchend", e => {
+document.addEventListener("touchend", e => {
+  if (answered) return;
+
   const dx = e.changedTouches[0].clientX - startX;
   const dy = e.changedTouches[0].clientY - startY;
 
+  let answer = null;
+
   if (Math.abs(dx) > Math.abs(dy)) {
-    if (dx > 50) record("SAME");
-    else if (dx < -50) record("SKIP");
+    if (dx > 50) answer = "SAME";
+    if (dx < -50) answer = "SKIP";
   } else {
-    if (dy < -50) record("BETTER");
-    else if (dy > 50) record("WORSE");
+    if (dy < -50) answer = "BETTER";
+    if (dy > 50) answer = "WORSE";
   }
+
+  if (answer) confirmAnswer(answer);
 });
 
-function record(value) {
-  status.innerText = "Recorded: " + value;
+function confirmAnswer(answer) {
+  answered = true;
+  document.getElementById("status").innerText =
+    `Recorded: ${answer}\nConfirming...`;
 
-  // NEXT STEP: send to backend
-  console.log({
-    answer: value,
-    timestamp: new Date().toISOString()
+  setTimeout(() => {
+    sendData(answer, "confirmed");
+    document.getElementById("status").innerText =
+      `Saved. Thank you.`;
+  }, 800);
+}
+
+function sendData(answer, confirmation) {
+  fetch(ENDPOINT, {
+    method: "POST",
+    body: JSON.stringify({
+      answer,
+      confirmation,
+      userAgent: navigator.userAgent
+    })
   });
 }
 </script>
